@@ -12,6 +12,10 @@ from telegram.ext import (
 )
 from asgiref.sync import sync_to_async
 
+from Game.models import Tournament
+
+from History.models import TournamentResult
+
 logger = logging.getLogger(__name__)
 
 # Импорт моделей
@@ -86,6 +90,9 @@ async def register_user_handlers(application):
     # Команда /settings
     application.add_handler(CommandHandler("settings", settings_command))
 
+    # Команда /join {tournament.id}
+    application.add_handler(CallbackQueryHandler(join_command, pattern=r"^join_\d+$"))
+
     # Команда /balance
     application.add_handler(CommandHandler("balance", balance_command))
 
@@ -146,7 +153,6 @@ async def profile_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 @registered_required
 async def games_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Команда /profile - показывает профиль пользователя"""
     user_tg = update.effective_user
 
     @sync_to_async
@@ -157,49 +163,125 @@ async def games_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return None
 
     @sync_to_async
-    def get_games():
+    def get_games(user):
         try:
-            return Users.objects.get(telegram_id=user_tg.id)
+            return list(TournamentResult.objects
+                        .filter(user=user)
+                        .select_related('tournament')
+                        [:10])
         except Users.DoesNotExist:
             return None
 
     user = await get_user_profile()
-    games = await get_games()
+    games = await get_games(user)
 
     if not user:
         await update.message.reply_text("❌ Ошибка загрузки профиля")
         return
 
-    # Создаем клавиатуру
+    '''# Создаем клавиатуру
     keyboard = [
         [
-            InlineKeyboardButton("✏️ Изменить данные", callback_data="user_edit_profile"),
-            InlineKeyboardButton("🔐 Безопасность", callback_data="user_security")
-        ],
-        [
-            InlineKeyboardButton("💳 Баланс", callback_data="user_balance"),
-            InlineKeyboardButton("📊 Статистика", callback_data="user_stats")
+            InlineKeyboardButton("✏️ Записатся на игру", callback_data=""),
+            InlineKeyboardButton("📊 Кто уже записался", callback_data="")
         ]
     ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    reply_markup = InlineKeyboardMarkup(keyboard)'''
 
     profile_text = f"""
-    👤 *оследние игры:*
+    Последние 10 игр:
+    """
 
-    *Не законченые:*
-    • Никнейм: {user.nickname}
-
-    *Telegram:*
-    • ID: {user_tg.id}
-
-    *Статус:*
-    • Рейтинг: {user.score}
+    for game in games:
+        profile_text += f"""
+    {game.tournament}
     """
 
     await update.message.reply_text(
         profile_text,
-        parse_mode='Markdown',
-        reply_markup=reply_markup
+        #parse_mode='Markdown',
+        #reply_markup=reply_markup
+    )
+
+
+@registered_required
+async def join_command(update, context):
+
+    user_tg = update.effective_user
+    query = update.callback_query
+    await query.answer()
+
+    try:
+        tournament_id = int(query.data.split("_")[1])
+    except ValueError:
+        await query.message.reply_text("❌ Неверный ID")
+        return
+
+    @sync_to_async
+    def get_user_profile():
+        try:
+            return Users.objects.get(telegram_id=user_tg.id)
+        except Users.DoesNotExist:
+            return None
+
+    @sync_to_async
+    def get_games(id):
+        try:
+            return Tournament.objects.get(id=id)
+
+        except Tournament.DoesNotExist:
+            return None
+
+    @sync_to_async
+    def create_tournament_result(game, user):
+
+        obj, created = TournamentResult.objects.get_or_create(
+            tournament=game,
+            user=user
+        )
+
+        if not created:
+            return None
+        else:
+            return obj
+
+    user = await get_user_profile()
+
+    if not user:
+        await query.message.reply_text("❌ Ошибка загрузки профиля")
+        return
+
+    game = await get_games(tournament_id)
+
+    if not game:
+        await query.message.reply_text("❌ Ошибка загрузки игры")
+        return
+
+    result = await create_tournament_result(game, user)
+
+    if not result:
+        await query.message.reply_text("Вы уже зарегистрированы")
+        return
+
+
+    '''# Создаем клавиатуру
+    keyboard = [
+        [
+            InlineKeyboardButton("✏️ Записатся на игру", callback_data=""),
+            InlineKeyboardButton("📊 Кто уже записался", callback_data="")
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)'''
+
+    profile_text = f"""
+    {user.username} вошёл в турнир №{tournament_id}.
+    """
+
+
+    await query.message.reply_text(
+        profile_text,
+        #parse_mode='Markdown',
+        #reply_markup=reply_markup
     )
 
 

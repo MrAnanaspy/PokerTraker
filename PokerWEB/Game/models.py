@@ -39,7 +39,7 @@ class Season(models.Model):
 
 
 class Tournament(models.Model):
-    date = models.DateField(
+    date = models.DateTimeField(
         blank=True,
         null=True,
         verbose_name='Дата'
