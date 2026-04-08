@@ -47,6 +47,9 @@ class TournamentResult(models.Model):
         verbose_name='Время регистрации'
     )
 
+    def __str__(self):
+        return f"{self.user} - {self.tournament}"
+
     class Meta:
         unique_together = ['user', 'tournament']
         verbose_name = 'История турнира'
