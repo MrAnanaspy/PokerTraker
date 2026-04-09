@@ -240,9 +240,7 @@
             // Обрабатываем структуру ответа: { results: [...] }
             serverResults = data.results || [];
 
-            // TODO: Добавить эндпоинт для получения истории выбываний
-            // Пока создаем пустой массив или загружаем из другого эндпоинта
-            // serverKnockoutHistory = data.history || [];
+            serverKnockoutHistory = data.history || [];
 
             renderAllUI();
         } catch (error) {
@@ -450,7 +448,16 @@
             document.body.removeChild(modal);
         });
     }
+    // Приведение времени в нормальный формат hh/mm/ss
+    const parseDuration = (iso) => {
+      const match = iso.match(/P(?:(\d+)D)?T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
 
+      if (!match) return "";
+
+      const [, d, h, m, s] = match.map(x => Number(x) || 0);
+
+      return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    };
     function updateKnockoutLog() {
         knockoutLog.innerHTML = '';
         if (!serverKnockoutHistory.length) {
@@ -459,11 +466,12 @@
         }
 
         serverKnockoutHistory.slice(0, 15).forEach(record => {
+            const time = parseDuration(record.time)
             const logItem = document.createElement('div');
             logItem.className = 'log-item';
             logItem.innerHTML = `
-                <strong>${record.knocker_name || 'Система'}</strong> выбил <strong>${record.target_name}</strong>
-                <br><small>Уровень ${record.level}, ${record.time}</small>
+                <strong>${record.killer__user__username || 'Система'}</strong> выбил <strong>${record.killed__user__username}</strong>
+                <br><small>Время: ${time}</small>
             `;
             knockoutLog.appendChild(logItem);
         });

@@ -21,6 +21,7 @@ def get_timer(request, id):
 def get_timer_data(request, id):
     tournament = Tournament.objects.get(id=id)
     results = TournamentResult.objects.filter(tournament=tournament)
+    history = BountyEvent.objects.filter(killer__in=results)
 
     data = {
         "results": list(results.values(
@@ -31,8 +32,17 @@ def get_timer_data(request, id):
             "user__username",
             "user__telegram_id",
             "user__score"
+        )),
+        "history": list(history.values(
+            "id",
+            "killer__user__username",
+            "killed__user__username",
+            "time"
         ))
+
+
     }
+    print(data)
 
     return JsonResponse(data)
 
@@ -46,19 +56,25 @@ def knockout(request):
             knocker_id = data.get("knocker_id")
             target_id = data.get("target_id")
 
-            knocker = TournamentResult.objects.get(id=knocker_id)
-            target = TournamentResult.objects.get(id=target_id)
-            count_players = TournamentResult.objects.filter(Q(tournament__id=tournament_id) & Q(place=None)).count()
+            if knocker_id:
+                knocker = TournamentResult.objects.get(id=knocker_id)
+                target = TournamentResult.objects.get(id=target_id)
+                count_players = TournamentResult.objects.filter(Q(tournament__id=tournament_id) & Q(place=None)).count()
 
-            target.place = count_players
-            target.save()
+                target.place = count_players
+                target.save()
 
+                BountyEvent.objects.create(killer=knocker, killed=target,)
 
-            BountyEvent.objects.create(killer=knocker, killed=target,)
-            return JsonResponse({
-                "status": "ok",
-                "tournament_id": tournament_id
-            })
+                return JsonResponse({
+                    "status": "ok",
+                    "tournament_id": tournament_id
+                })
+            else:
+                return JsonResponse({
+                    "status": "ok",
+                    "tournament_id": tournament_id
+                })
 
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
