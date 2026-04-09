@@ -38,7 +38,9 @@
         .section-title { font-size: 1.8rem; color: #ffcc00; margin-bottom: 25px; padding-bottom: 10px; border-bottom: 2px solid #ff0000; display: flex; align-items: center; gap: 10px; }
         .players-list { max-height: 600px; overflow-y: auto; margin-top: 20px; }
         .player-item { display: flex; justify-content: space-between; align-items: center; background-color: #222; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #ffcc00; transition: all 0.3s ease; }
-        .player-item.eliminated { opacity: 0.6; border-left-color: #ff4444; text-decoration: line-through; }
+        .player-item.eliminated { opacity: 0.6; border-left-color: #ff4444; }
+        /* Убрано зачеркивание всего блока */
+        .player-item.eliminated .player-name { text-decoration: line-through; } /* Зачеркнуто только имя */
         .player-info { flex: 1; }
         .player-name { font-size: 1.3rem; font-weight: bold; color: #fff; margin-bottom: 5px; }
         .player-stats { display: flex; gap: 15px; }
