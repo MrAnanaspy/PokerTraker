@@ -7,4 +7,5 @@ urlpatterns = [
     path('tournament/timer/<int:id>', get_timer, name='get-timer'),
     path('timer-data/<int:id>/', get_timer_data, name='get_timer_data'),
     path('api/knockout/', knockout, name='knockout'),
+    path('api/revive/', revive, name='revive'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

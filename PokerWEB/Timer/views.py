@@ -78,3 +78,27 @@ def knockout(request):
             return JsonResponse({"error": str(e)}, status=400)
 
     return JsonResponse({"error": "Invalid method"}, status=405)
+
+
+def revive(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+
+            tournament_id = data.get("tournament_id")
+            player_result_id = data.get("player_result_id")
+
+            player_result = TournamentResult.objects.get(id=player_result_id)
+
+            player_result.place = None
+            player_result.save()
+
+            return JsonResponse({
+                "status": "ok",
+                "tournament_id": tournament_id
+            })
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+    return JsonResponse({"error": "Invalid method"}, status=405)

@@ -293,12 +293,16 @@
     // Отправка события "Вернуть игрока"
     async function sendRevive(resultId) {
         try {
+            const csrfToken = getCSRFToken();
             const response = await fetch('/api/revive/', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+                 },
                 body: JSON.stringify({
                     tournament_id: TOURNAMENT_ID,
-                    result_id: resultId
+                    player_result_id: resultId
                 })
             });
 
