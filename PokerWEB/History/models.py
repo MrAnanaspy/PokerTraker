@@ -60,8 +60,10 @@ class BountyEvent(models.Model):
     killer = models.ForeignKey(
         TournamentResult,
         on_delete=models.CASCADE,
-        verbose_name='Результат турнира',
-        related_name='killer'
+        verbose_name='Кто выбил',
+        related_name='killer',
+        null=True,
+        blank=True,
     )
     killed = models.ForeignKey(
         TournamentResult,

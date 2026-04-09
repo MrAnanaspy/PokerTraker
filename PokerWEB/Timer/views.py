@@ -58,23 +58,21 @@ def knockout(request):
 
             if knocker_id:
                 knocker = TournamentResult.objects.get(id=knocker_id)
-                target = TournamentResult.objects.get(id=target_id)
-                count_players = TournamentResult.objects.filter(Q(tournament__id=tournament_id) & Q(place=None)).count()
-
-                target.place = count_players
-                target.save()
-
-                BountyEvent.objects.create(killer=knocker, killed=target,)
-
-                return JsonResponse({
-                    "status": "ok",
-                    "tournament_id": tournament_id
-                })
             else:
-                return JsonResponse({
-                    "status": "ok",
-                    "tournament_id": tournament_id
-                })
+                knocker = None
+
+            target = TournamentResult.objects.get(id=target_id)
+            count_players = TournamentResult.objects.filter(Q(tournament__id=tournament_id) & Q(place=None)).count()
+
+            target.place = count_players
+            target.save()
+
+            BountyEvent.objects.create(killer=knocker, killed=target,)
+
+            return JsonResponse({
+                "status": "ok",
+                "tournament_id": tournament_id
+            })
 
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
